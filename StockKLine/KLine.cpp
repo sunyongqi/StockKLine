@@ -34,6 +34,12 @@ CKLine::CKLine()
 
 	m_mapKPatternTrend.clear();
 	m_nFindFrom = 0;
+
+	m_nAveragePeriod[0] = ap5Days;
+	m_nAveragePeriod[1] = ap10Days;
+	m_nAveragePeriod[2] = ap20Days;
+	m_nAveragePeriod[3] = ap30Days;
+	m_nAveragePeriod[4] = ap60Days;
 }
 
 /****************************************************************************
@@ -46,11 +52,10 @@ CKLine::~CKLine()
 	m_penYAxis.DeleteObject();
 	m_penRed.DeleteObject();
 	m_penGreen.DeleteObject();
-	m_penMA5.DeleteObject();
-	m_penMA10.DeleteObject();
-	m_penMA20.DeleteObject();
-	m_penMA30.DeleteObject();
-	m_penMA60.DeleteObject();
+	for (int iLine = 0; iLine < MA_LINE_MAX; iLine++)
+	{
+		m_penMA[iLine].DeleteObject();
+	}
 
 	m_brushRed.DeleteObject();
 	m_brushGreen.DeleteObject();
@@ -68,22 +73,21 @@ void CKLine::SetColor(COLORREF rgbBack, COLORREF rgbYAxis, COLORREF rgbGraph)
 	m_penYAxis.DeleteObject();
 	m_penRed.DeleteObject();
 	m_penGreen.DeleteObject();
-	m_penMA5.DeleteObject();
-	m_penMA10.DeleteObject();
-	m_penMA20.DeleteObject();
-	m_penMA30.DeleteObject();
-	m_penMA60.DeleteObject();
+	for (int iLine = 0; iLine < MA_LINE_MAX; iLine++)
+	{
+		m_penMA[iLine].DeleteObject();
+	}
 	m_brushRed.DeleteObject();
 	m_brushGreen.DeleteObject();
 
 	m_penYAxis.CreatePen(PS_DOT, 1, defRgbYAxis);
 	m_penRed.CreatePen(PS_SOLID, 2, defRgbRed);
 	m_penGreen.CreatePen(PS_SOLID, 2, defRgbGreen);
-	m_penMA5.CreatePen(PS_SOLID, 1, defRgbLine1);
-	m_penMA10.CreatePen(PS_SOLID, 1, defRgbLine2);
-	m_penMA20.CreatePen(PS_SOLID, 1, defRgbLine3);
-	m_penMA30.CreatePen(PS_SOLID, 1, defRgbLine4);
-	m_penMA60.CreatePen(PS_SOLID, 1, defRgbLine5);
+	m_penMA[0].CreatePen(PS_SOLID, 1, defRgbLine1);
+	m_penMA[1].CreatePen(PS_SOLID, 1, defRgbLine2);
+	m_penMA[2].CreatePen(PS_SOLID, 1, defRgbLine3);
+	m_penMA[3].CreatePen(PS_SOLID, 1, defRgbLine4);
+	m_penMA[4].CreatePen(PS_SOLID, 1, defRgbLine5);
 	m_penMark.CreatePen(PS_DOT, 1, defRgbRed);
 	m_brushRed.CreateSolidBrush(defRgbRed);
 	m_brushGreen.CreateSolidBrush(defRgbGreen);
@@ -107,8 +111,8 @@ void CKLine::AnalyzeData(SUMMARY* pHistory, int nCount)
 	m_nDaysTotal = nCount;
 
 	CalculateMovingAverages();
-	CalculateKLinePattern();
-	MakeKPatternMap();
+	//CalculateKLinePattern();
+	//MakeKPatternMap();
 }
 
 void CKLine::CalculateMovingAverages()
@@ -116,57 +120,80 @@ void CKLine::CalculateMovingAverages()
 	if (!m_pHistory)
 		return;
 
-	for (int i = 0; i < m_nDaysTotal; i++) {
-		int j = 0;
-		double priceSum = 0;
-		long volumeSum = 0;
-		for (; j < 5; j++)
+	for (int iDay = 0; iDay < m_nDaysTotal; iDay++)
+	{
+		for (int iLine = 0; iLine < MA_LINE_MAX; iLine++)
 		{
-			if (i + j >= m_nDaysTotal)
-				break;
-			priceSum += (m_pHistory + i + j)->close;
-			volumeSum += (m_pHistory + i + j)->volume;
+			double priceSum = 0;
+			long volumeSum = 0;
+			for (int iPeriod = 0; iPeriod < m_nAveragePeriod[iLine]; iPeriod++)
+			{
+				if (iDay + iPeriod >= m_nDaysTotal)
+					break;
+				priceSum += (m_pHistory + iDay + iPeriod)->close;
+				volumeSum += (m_pHistory + iDay + iPeriod)->volume;
+			}
+			(m_pHistory + iDay)->priceMA[iLine] = priceSum / m_nAveragePeriod[iLine];
+			(m_pHistory + iDay)->volumeMA[iLine] = volumeSum / m_nAveragePeriod[iLine];
 		}
-		(m_pHistory + i)->price5PMA = priceSum / j;
-		(m_pHistory + i)->volume5PMA = volumeSum / j;
-		for (; j < 10; j++)
-		{
-			if (i + j >= m_nDaysTotal)
-				break;
-			priceSum += (m_pHistory + i + j)->close;
-			volumeSum += (m_pHistory + i + j)->volume;
-		}
-		(m_pHistory + i)->price10PMA = priceSum / j;
-		(m_pHistory + i)->volume10PMA = volumeSum / j;
-		for (; j < 20; j++)
-		{
-			if (i + j >= m_nDaysTotal)
-				break;
-			priceSum += (m_pHistory + i + j)->close;
-			volumeSum += (m_pHistory + i + j)->volume;
-		}
-		(m_pHistory + i)->price20PMA = priceSum / j;
-		(m_pHistory + i)->volume20PMA = volumeSum / j;
-		for (; j < 30; j++)
-		{
-			if (i + j >= m_nDaysTotal)
-				break;
-			priceSum += (m_pHistory + i + j)->close;
-			volumeSum += (m_pHistory + i + j)->volume;
-		}
-		(m_pHistory + i)->price30PMA = priceSum / j;
-		(m_pHistory + i)->volume30PMA = volumeSum / j;
-		for (; j < 60; j++)
-		{
-			if (i + j >= m_nDaysTotal)
-				break;
-			priceSum += (m_pHistory + i + j)->close;
-			volumeSum += (m_pHistory + i + j)->volume;
-		}
-		(m_pHistory + i)->price60PMA = priceSum / j;
-		(m_pHistory + i)->volume60PMA = volumeSum / j;
 	}
 }
+//void CKLine::CalculateMovingAverages()
+//{
+//	if (!m_pHistory)
+//		return;
+//
+//	for (int i = 0; i < m_nDaysTotal; i++) {
+//		int j = 0;
+//		double priceSum = 0;
+//		long volumeSum = 0;
+//		for (; j < 5; j++)
+//		{
+//			if (i + j >= m_nDaysTotal)
+//				break;
+//			priceSum += (m_pHistory + i + j)->close;
+//			volumeSum += (m_pHistory + i + j)->volume;
+//		}
+//		(m_pHistory + i)->priceMA_1 = priceSum / j;
+//		(m_pHistory + i)->volumeMA_1 = volumeSum / j;
+//		for (; j < 10; j++)
+//		{
+//			if (i + j >= m_nDaysTotal)
+//				break;
+//			priceSum += (m_pHistory + i + j)->close;
+//			volumeSum += (m_pHistory + i + j)->volume;
+//		}
+//		(m_pHistory + i)->priceMA_2 = priceSum / j;
+//		(m_pHistory + i)->volumeMA_2 = volumeSum / j;
+//		for (; j < 20; j++)
+//		{
+//			if (i + j >= m_nDaysTotal)
+//				break;
+//			priceSum += (m_pHistory + i + j)->close;
+//			volumeSum += (m_pHistory + i + j)->volume;
+//		}
+//		(m_pHistory + i)->priceMA_3 = priceSum / j;
+//		(m_pHistory + i)->volumeMA_3 = volumeSum / j;
+//		for (; j < 30; j++)
+//		{
+//			if (i + j >= m_nDaysTotal)
+//				break;
+//			priceSum += (m_pHistory + i + j)->close;
+//			volumeSum += (m_pHistory + i + j)->volume;
+//		}
+//		(m_pHistory + i)->priceMA_4 = priceSum / j;
+//		(m_pHistory + i)->volumeMA_4 = volumeSum / j;
+//		for (; j < 60; j++)
+//		{
+//			if (i + j >= m_nDaysTotal)
+//				break;
+//			priceSum += (m_pHistory + i + j)->close;
+//			volumeSum += (m_pHistory + i + j)->volume;
+//		}
+//		(m_pHistory + i)->priceMA_5 = priceSum / j;
+//		(m_pHistory + i)->volumeMA_5 = volumeSum / j;
+//	}
+//}
 
 void CKLine::CalculateKLinePattern()
 {
@@ -206,13 +233,13 @@ void CKLine::MakeKPatternMap()
 		}
 		if (i >= 5)
 		{
-			trend.bRiseIn5Days = ((m_pHistory + i - 5)->price5PMA - (m_pHistory + i)->price5PMA) >= 0 ? true : false;
-			trend.fRateIn5Days = ((m_pHistory + i - 5)->price5PMA - (m_pHistory + i)->price5PMA) / (m_pHistory + i)->price5PMA;
+			trend.bRiseIn5Days = ((m_pHistory + i - 5)->priceMA[0] - (m_pHistory + i)->priceMA[0]) >= 0 ? true : false;
+			trend.fRateIn5Days = ((m_pHistory + i - 5)->priceMA[0] - (m_pHistory + i)->priceMA[0]) / (m_pHistory + i)->priceMA[0];
 		}
 		if (i >= 10)
 		{
-			trend.bRiseIn10Days = ((m_pHistory + i - 10)->price10PMA - (m_pHistory + i)->price10PMA) >= 0 ? true : false;
-			trend.fRateIn10Days = ((m_pHistory + i - 10)->price10PMA - (m_pHistory + i)->price10PMA) / (m_pHistory + i)->price10PMA;
+			trend.bRiseIn10Days = ((m_pHistory + i - 10)->priceMA[1] - (m_pHistory + i)->priceMA[1]) >= 0 ? true : false;
+			trend.fRateIn10Days = ((m_pHistory + i - 10)->priceMA[1] - (m_pHistory + i)->priceMA[1]) / (m_pHistory + i)->priceMA[1];
 		}
 		m_mapKPatternTrend.insert(std::make_pair((m_pHistory + i)->kPattern3, trend));
 	}
@@ -324,11 +351,11 @@ ePriceChange CKLine::GetVolumeTrend(SUMMARY* pData, int nPeriod)
 ePriceChange CKLine::GetMA5Trend(SUMMARY* pData, int nPeriod)
 {
 	ASSERT(nPeriod > 1);
-	if (pData->price5PMA > (pData + nPeriod)->price5PMA)	// Rise
+	if (pData->priceMA[0] > (pData + nPeriod)->priceMA[0])	// Rise
 	{
 		for (int i = 0; i < nPeriod; i++)
 		{
-			if ((pData + i)->price5PMA < (pData + i + 1)->price5PMA)
+			if ((pData + i)->priceMA[0] < (pData + i + 1)->priceMA[0])
 			{
 				return pcIncrease;
 			}
@@ -339,7 +366,7 @@ ePriceChange CKLine::GetMA5Trend(SUMMARY* pData, int nPeriod)
 	{
 		for (int i = 0; i < nPeriod; i++)
 		{
-			if ((pData + i)->price5PMA >(pData + i + 1)->price5PMA)
+			if ((pData + i)->priceMA[0] >(pData + i + 1)->priceMA[0])
 			{
 				return pcDecrease;
 			}
@@ -362,7 +389,7 @@ int CKLine::FindNext(SUMMARY* pDate, int nPeriod)
 	ASSERT(nPeriod == 3);	// Œ»ómap‚ÍkPattern3‚µ‚©‘Î‰ž‚µ‚Ä‚¢‚È‚¢‚½‚ß
 	KPATTERN kPattern = EncodeKPattern(pDate, nPeriod);
 
-	if (m_nFindFrom >= m_mapKPatternTrend.count(kPattern))
+	if (m_nFindFrom >= (int)m_mapKPatternTrend.count(kPattern))
 	{
 		m_nFindFrom = 0;
 		return -1;
@@ -427,11 +454,10 @@ void CKLine::Draw(CDC* pDC)
 	DrawBackground(pDC);
 	DrawKLine(pDC);
 	DrawVolume(pDC);
-	DrawPriceMA(pDC, ap5Days);
-	DrawPriceMA(pDC, ap10Days);
-	DrawPriceMA(pDC, ap20Days);
-	DrawPriceMA(pDC, ap30Days);
-	DrawPriceMA(pDC, ap60Days);
+	for (int iLine = 0; iLine < MA_LINE_MAX; iLine++)
+	{
+		DrawMovingAverages(pDC, iLine);
+	}
 
 	if (m_nMarkCount > 0)
 		DrawMark(pDC);
@@ -493,8 +519,6 @@ void CKLine::DrawBackground(CDC* pDC)
 			if (m_nHighVolume < pData->volume)
 				m_nHighVolume = pData->volume;
 		}
-		//m_fLowPrice -= 40;
-		//m_fHighPrice += 40;
 	}
 	
 	// 3–{‚ÌPriceLine‚ð•`‰æ
@@ -603,83 +627,24 @@ void CKLine::DrawKLine(CDC* pDC)
 	pDC->SelectObject(pOldPen);
 }
 
-void CKLine::DrawPriceMA(CDC* pDC, eAveragePeriod ePeriod)
+void CKLine::DrawMovingAverages(CDC* pDC, int iLine)
 {
 	ASSERT(m_nNumDayDisplay > 1);
 	if (!m_pHistory)
 		return;
 
-	CPen* pOldPen = NULL;
-	switch (ePeriod)
+	CPen* pOldPen = (CPen*)pDC->SelectObject(&m_penMA[iLine]);
+	pDC->MoveTo(IndexToXPos(0), PriceToYPos((m_pHistory + m_nLastIndex)->priceMA[iLine]));
+	for (int i = 1; i < m_nNumDayDisplay; i++)
 	{
-	case ap5Days:
-		pOldPen = (CPen*)pDC->SelectObject(&m_penMA5);
-		pDC->MoveTo(IndexToXPos(0), PriceToYPos((m_pHistory + m_nLastIndex)->price5PMA));
-		for (int i = 1; i < m_nNumDayDisplay; i++)
-		{
-			pDC->LineTo(IndexToXPos(i), PriceToYPos((m_pHistory + m_nLastIndex + i)->price5PMA));
-		}
-		pDC->MoveTo(IndexToXPos(0), VolumeToYPos((m_pHistory + m_nLastIndex)->volume5PMA));
-		for (int i = 1; i < m_nNumDayDisplay; i++)
-		{
-			pDC->LineTo(IndexToXPos(i), VolumeToYPos((m_pHistory + m_nLastIndex + i)->volume5PMA));
-		}
-		break;
-	case ap10Days:
-		pOldPen = (CPen*)pDC->SelectObject(&m_penMA10);
-		pDC->MoveTo(IndexToXPos(0), PriceToYPos((m_pHistory + m_nLastIndex)->price10PMA));
-		for (int i = 1; i < m_nNumDayDisplay; i++)
-		{
-			pDC->LineTo(IndexToXPos(i), PriceToYPos((m_pHistory + m_nLastIndex + i)->price10PMA));
-		}
-		pDC->MoveTo(IndexToXPos(0), VolumeToYPos((m_pHistory + m_nLastIndex)->volume10PMA));
-		for (int i = 1; i < m_nNumDayDisplay; i++)
-		{
-			pDC->LineTo(IndexToXPos(i), VolumeToYPos((m_pHistory + m_nLastIndex + i)->volume10PMA));
-		}
-		break;
-	case ap20Days:
-		pOldPen = (CPen*)pDC->SelectObject(&m_penMA20);
-		pDC->MoveTo(IndexToXPos(0), PriceToYPos((m_pHistory + m_nLastIndex)->price20PMA));
-		for (int i = 1; i < m_nNumDayDisplay; i++)
-		{
-			pDC->LineTo(IndexToXPos(i), PriceToYPos((m_pHistory + m_nLastIndex + i)->price20PMA));
-		}
-		pDC->MoveTo(IndexToXPos(0), VolumeToYPos((m_pHistory + m_nLastIndex)->volume20PMA));
-		for (int i = 1; i < m_nNumDayDisplay; i++)
-		{
-			pDC->LineTo(IndexToXPos(i), VolumeToYPos((m_pHistory + m_nLastIndex + i)->volume20PMA));
-		}
-		break;
-	case ap30Days:
-		pOldPen = (CPen*)pDC->SelectObject(&m_penMA30);
-		pDC->MoveTo(IndexToXPos(0), PriceToYPos((m_pHistory + m_nLastIndex)->price30PMA));
-		for (int i = 1; i < m_nNumDayDisplay; i++)
-		{
-			pDC->LineTo(IndexToXPos(i), PriceToYPos((m_pHistory + m_nLastIndex + i)->price30PMA));
-		}
-		pDC->MoveTo(IndexToXPos(0), VolumeToYPos((m_pHistory + m_nLastIndex)->volume30PMA));
-		for (int i = 1; i < m_nNumDayDisplay; i++)
-		{
-			pDC->LineTo(IndexToXPos(i), VolumeToYPos((m_pHistory + m_nLastIndex + i)->volume30PMA));
-		}
-		break;
-	case ap60Days:
-		pOldPen = (CPen*)pDC->SelectObject(&m_penMA60);
-		pDC->MoveTo(IndexToXPos(0), PriceToYPos((m_pHistory + m_nLastIndex)->price60PMA));
-		for (int i = 1; i < m_nNumDayDisplay; i++)
-		{
-			pDC->LineTo(IndexToXPos(i), PriceToYPos((m_pHistory + m_nLastIndex + i)->price60PMA));
-		}
-		pDC->MoveTo(IndexToXPos(0), VolumeToYPos((m_pHistory + m_nLastIndex)->volume60PMA));
-		for (int i = 1; i < m_nNumDayDisplay; i++)
-		{
-			pDC->LineTo(IndexToXPos(i), VolumeToYPos((m_pHistory + m_nLastIndex + i)->volume60PMA));
-		}
-		break;
-	default:
-		break;
+		pDC->LineTo(IndexToXPos(i), PriceToYPos((m_pHistory + m_nLastIndex + i)->priceMA[iLine]));
 	}
+	pDC->MoveTo(IndexToXPos(0), VolumeToYPos((m_pHistory + m_nLastIndex)->volumeMA[iLine]));
+	for (int i = 1; i < m_nNumDayDisplay; i++)
+	{
+		pDC->LineTo(IndexToXPos(i), VolumeToYPos((m_pHistory + m_nLastIndex + i)->volumeMA[iLine]));
+	}
+
 	pDC->SelectObject(pOldPen);
 }
 
@@ -714,7 +679,7 @@ void CKLine::DrawVolume(CDC* pDC)
 
 	double XPos;	// •`‰æ‚·‚é X ˆÊ’u
 	int rcWidth = (int)(m_fPlotSpace * 1.5 / 2.0);
-	int rcTop, rcLeft, rcRight, rcBottom, lineTop, lineBottom;
+	int rcTop, rcLeft, rcRight, rcBottom;
 	SUMMARY* pData = NULL;
 
 	for (int i = 0; i < m_nNumDayDisplay; i++) {

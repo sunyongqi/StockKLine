@@ -3,6 +3,7 @@
 #include <map>
 
 #define NUM_LINE_DISPLAY	81
+#define MA_LINE_MAX			5
 
 typedef DWORD KPATTERN;
 
@@ -15,16 +16,18 @@ typedef struct daySummary
 	double close;
 	long volume;
 	double adjClose;
-	double price5PMA;
-	double price10PMA;
-	double price20PMA;
-	double price30PMA;
-	double price60PMA;
-	long volume5PMA;
-	long volume10PMA;
-	long volume20PMA;
-	long volume30PMA;
-	long volume60PMA;
+	double priceMA[MA_LINE_MAX];
+	long volumeMA[MA_LINE_MAX];
+	//double priceMA_1;
+	//double priceMA_2;
+	//double priceMA_3;
+	//double priceMA_4;
+	//double priceMA_5;
+	//long volumeMA_1;
+	//long volumeMA_2;
+	//long volumeMA_3;
+	//long volumeMA_4;
+	//long volumeMA_5;
 	KPATTERN kPattern1;
 	KPATTERN kPattern2;
 	KPATTERN kPattern3;
@@ -53,9 +56,9 @@ typedef struct futureTrend
 	int nIndex;
 	bool bRiseNextDay;		// close値で判断
 	double fRateNextDay;
-	bool bRiseIn5Days;		// price5PMA値で判断
+	bool bRiseIn5Days;		// priceMA_1値で判断
 	double fRateIn5Days;
-	bool bRiseIn10Days;		// price10PMA値で判断
+	bool bRiseIn10Days;		// priceMA_2値で判断
 	double fRateIn10Days;
 } TREND;
 
@@ -78,11 +81,6 @@ public:
 		defRgbLine3 = RGB(51, 218, 37),
 		defRgbLine4 = RGB(111, 129, 251),
 		defRgbLine5 = RGB(222, 111, 5),
-		//defRgbLine6 = RGB(218, 222, 58),
-		//defRgbLine7 = RGB(218, 222, 58),
-		//defRgbLine8 = RGB(218, 222, 58),
-		//defRgbLine9 = RGB(218, 222, 58),
-		//defRgbLine10 = RGB(218, 222, 58),
 	};
 
 	virtual void SetColor(COLORREF rgbBack, COLORREF rgbYAxis, COLORREF rgbGraph);
@@ -104,11 +102,7 @@ protected:
 	CPen		m_penYAxis; 		// Y 軸描画用ペン
 	CPen		m_penRed;
 	CPen		m_penGreen;
-	CPen		m_penMA5;
-	CPen		m_penMA10;
-	CPen		m_penMA20;
-	CPen		m_penMA30;
-	CPen		m_penMA60;
+	CPen		m_penMA[MA_LINE_MAX];
 	CPen		m_penMark;			// 赤い点線
 
 	CBrush		m_brushRed;
@@ -120,7 +114,6 @@ protected:
 
 	int 		m_nNumDayDisplay; 		// 画面上表示されるデータ数
 	int			m_nLastIndex;			// 画面上表示される最新のデータ（一番右の）
-	//int 		m_nNumYAxis;		// Y 軸の数
 	double		m_fLowPrice;			// 株価描画範囲の下限
 	double		m_fHighPrice;			// 株価描画範囲の上限
 	long		m_nLowVolume;			// 株価描画範囲の上限
@@ -140,11 +133,12 @@ protected:
 	std::multimap<KPATTERN, TREND> m_mapKPatternTrend;
 	int			m_nFindFrom;
 	//std::multimap<KPATTERN, TREND>::iterator m_mapIterator;
+	int			m_nAveragePeriod[MA_LINE_MAX];
 
 	virtual void Draw(CDC* pDC);
 	virtual void DrawBackground(CDC* pDC);
 	virtual void DrawKLine(CDC* pDC);
-	virtual void DrawPriceMA(CDC* pDC, eAveragePeriod ePeriod);
+	virtual void DrawMovingAverages(CDC* pDC, int iLine);
 	virtual void DrawMark(CDC* pDC);
 	virtual void DrawVolume(CDC* pDC);
 

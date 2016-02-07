@@ -304,7 +304,7 @@ void CStockKLineDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	default:
 		return;
 	}
-	nNew = min(nMax - info.nPage, max(info.nMin, nNew));
+	nNew = min(nMax - (int)info.nPage, max(info.nMin, nNew));
 
 	int nPosOrg = info.nPos;
 	if (nNew != nPosOrg) {
