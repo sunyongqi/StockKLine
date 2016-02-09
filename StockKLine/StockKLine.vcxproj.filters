@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="ソース ファイル\3rdparty">
+      <UniqueIdentifier>{8d7e3fe5-26ec-4d5a-8789-8922c11a370b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\3rdparty\curl">
+      <UniqueIdentifier>{a2fe80f1-a7de-4129-bbe3-9360da0c83ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\3rdparty\curl\include">
+      <UniqueIdentifier>{395dc77c-0b62-4ab4-bd35-cb2b255f084d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\3rdparty\curl\include\curl">
+      <UniqueIdentifier>{1e8633f3-9617-46c3-abcd-91bfa1fcb5df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -38,6 +50,33 @@
     </ClInclude>
     <ClInclude Include="StockPrice.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\curl\include\curl\curl.h">
+      <Filter>ソース ファイル\3rdparty\curl\include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\curl\include\curl\curlbuild.h">
+      <Filter>ソース ファイル\3rdparty\curl\include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\curl\include\curl\curlrules.h">
+      <Filter>ソース ファイル\3rdparty\curl\include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\curl\include\curl\curlver.h">
+      <Filter>ソース ファイル\3rdparty\curl\include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\curl\include\curl\easy.h">
+      <Filter>ソース ファイル\3rdparty\curl\include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\curl\include\curl\mprintf.h">
+      <Filter>ソース ファイル\3rdparty\curl\include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\curl\include\curl\multi.h">
+      <Filter>ソース ファイル\3rdparty\curl\include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\curl\include\curl\stdcheaders.h">
+      <Filter>ソース ファイル\3rdparty\curl\include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\curl\include\curl\typecheck-gcc.h">
+      <Filter>ソース ファイル\3rdparty\curl\include\curl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

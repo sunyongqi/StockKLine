@@ -494,7 +494,7 @@ void CKLine::DrawBackground(CDC* pDC)
 		m_fLowPrice = 0;
 		m_fHighPrice = 10;
 		m_nLowVolume = 0;
-		m_nHighVolume = 10000;
+		m_nHighVolume = 0;
 	}
 	else
 	{
@@ -521,6 +521,9 @@ void CKLine::DrawBackground(CDC* pDC)
 		}
 	}
 	
+	if (m_fLowPrice == m_fHighPrice)
+		return;
+
 	// 3–{‚ÌPriceLine‚ð•`‰æ
 	double fMidPrice = ((int)((m_fLowPrice + m_fHighPrice) / 2.0 * 100)) / 100.0;
 	pDC->MoveTo(0, PriceToYPos(m_fLowPrice));
@@ -545,6 +548,9 @@ void CKLine::DrawBackground(CDC* pDC)
 	oss << m_fHighPrice;
 	CString strHighPrice(oss.str().c_str());
 	pDC->TextOutW(10, PriceToYPos(m_fHighPrice) - 10, strHighPrice);
+
+	if (m_nLowVolume == m_nHighVolume)
+		return;
 
 	// 2–{‚ÌVolumeLine‚ð•`‰æ
 	pDC->MoveTo(0, VolumeToYPos(m_nLowVolume));
@@ -573,6 +579,9 @@ void CKLine::DrawKLine(CDC* pDC)
 {
 	ASSERT(m_nNumDayDisplay > 1);
 	if (!m_pHistory)
+		return;
+
+	if (m_fLowPrice == m_fHighPrice)
 		return;
 
 	CPen* pOldPen = (CPen*)pDC->SelectStockObject(NULL_PEN);
@@ -634,15 +643,21 @@ void CKLine::DrawMovingAverages(CDC* pDC, int iLine)
 		return;
 
 	CPen* pOldPen = (CPen*)pDC->SelectObject(&m_penMA[iLine]);
-	pDC->MoveTo(IndexToXPos(0), PriceToYPos((m_pHistory + m_nLastIndex)->priceMA[iLine]));
-	for (int i = 1; i < m_nNumDayDisplay; i++)
+	if (m_fLowPrice < m_fHighPrice)
 	{
-		pDC->LineTo(IndexToXPos(i), PriceToYPos((m_pHistory + m_nLastIndex + i)->priceMA[iLine]));
+		pDC->MoveTo(IndexToXPos(0), PriceToYPos((m_pHistory + m_nLastIndex)->priceMA[iLine]));
+		for (int i = 1; i < m_nNumDayDisplay; i++)
+		{
+			pDC->LineTo(IndexToXPos(i), PriceToYPos((m_pHistory + m_nLastIndex + i)->priceMA[iLine]));
+		}
 	}
-	pDC->MoveTo(IndexToXPos(0), VolumeToYPos((m_pHistory + m_nLastIndex)->volumeMA[iLine]));
-	for (int i = 1; i < m_nNumDayDisplay; i++)
+	if (m_nLowVolume < m_nHighVolume)
 	{
-		pDC->LineTo(IndexToXPos(i), VolumeToYPos((m_pHistory + m_nLastIndex + i)->volumeMA[iLine]));
+		pDC->MoveTo(IndexToXPos(0), VolumeToYPos((m_pHistory + m_nLastIndex)->volumeMA[iLine]));
+		for (int i = 1; i < m_nNumDayDisplay; i++)
+		{
+			pDC->LineTo(IndexToXPos(i), VolumeToYPos((m_pHistory + m_nLastIndex + i)->volumeMA[iLine]));
+		}
 	}
 
 	pDC->SelectObject(pOldPen);
@@ -651,6 +666,9 @@ void CKLine::DrawMovingAverages(CDC* pDC, int iLine)
 void CKLine::DrawMark(CDC* pDC)
 {
 	if (m_nMarkCount < 1)
+		return;
+
+	if (m_fLowPrice == m_fHighPrice)
 		return;
 
 	CPen* pOldPen = pDC->SelectObject(&m_penMark);
@@ -672,6 +690,9 @@ void CKLine::DrawVolume(CDC* pDC)
 {
 	ASSERT(m_nNumDayDisplay > 1);
 	if (!m_pHistory)
+		return;
+
+	if (m_nLowVolume == m_nHighVolume)
 		return;
 
 	CPen* pOldPen = (CPen*)pDC->SelectStockObject(NULL_PEN);

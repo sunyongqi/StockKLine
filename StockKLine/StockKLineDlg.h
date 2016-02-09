@@ -40,10 +40,11 @@ public:
 	afx_msg void OnEnChangeEdit1();
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 
+	BOOL InitStockList();
 	void UpdateScrollBar(int nPos, int nMax, int nPage);
 	BOOL DrawKLine(std::string strCode);
 	void UpdateDateText(int iLast, int nNum = NUM_LINE_DISPLAY);
-	CString m_strStockCode;
+	CString m_strSearch;
 	CString m_strDate0;
 	CString m_strDate1;
 	CString m_strDate2;
@@ -54,4 +55,7 @@ public:
 	CString m_strDate7;
 	CString m_strDate8;
 	afx_msg void OnBnClickedFindpattern();
+	CString m_strStockInput;
+	CString m_strStockName;
+	CString m_strStockCode;
 };
