@@ -45,9 +45,6 @@
     <ClInclude Include="Resource.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KLine.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="StockPrice.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -78,6 +75,9 @@
     <ClInclude Include="3rdparty\curl\include\curl\typecheck-gcc.h">
       <Filter>ソース ファイル\3rdparty\curl\include\curl</Filter>
     </ClInclude>
+    <ClInclude Include="StockGraph.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StockKLine.cpp">
@@ -89,10 +89,10 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KLine.cpp">
+    <ClCompile Include="StockPrice.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="StockPrice.cpp">
+    <ClCompile Include="StockGraph.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

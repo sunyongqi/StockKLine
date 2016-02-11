@@ -62,12 +62,12 @@ typedef struct futureTrend
 	double fRateIn10Days;
 } TREND;
 
-class CKLine : public CStatic
+class CStockGraph : public CStatic
 {
 public:
 
-	CKLine();
-	virtual ~CKLine();
+	CStockGraph();
+	virtual ~CStockGraph();
 
 	enum{
 		// 色設定
@@ -94,7 +94,7 @@ public:
 	virtual void SetMark(int iStart, int nCount);
 
 	// オーバーライド
-	//{{AFX_VIRTUAL(CKLine)
+	//{{AFX_VIRTUAL(CStockGraph)
 	//}}AFX_VIRTUAL
 
 protected:
@@ -153,7 +153,7 @@ protected:
 	virtual ePriceChange GetMA5Trend(SUMMARY* pData, int nPeriod);
 
 	// 生成されたメッセージ マップ関数
-	//{{AFX_MSG(CKLine)
+	//{{AFX_MSG(CStockGraph)
 	afx_msg void OnPaint();
 	//}}AFX_MSG
 

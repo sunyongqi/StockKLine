@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "KLine.h"
+#include "StockGraph.h"
 #include <string>
 #include "afxwin.h"
 
@@ -19,7 +19,7 @@ public:
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_STOCKKLINE_DIALOG };
 #endif
-	CKLine	m_KLine;
+	CStockGraph	m_StockGraph;
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV サポート
@@ -42,7 +42,7 @@ public:
 
 	BOOL InitStockList();
 	void UpdateScrollBar(int nPos, int nMax, int nPage);
-	BOOL DrawKLine(std::string strCode);
+	BOOL DrawStockGraph(std::string strCode);
 	void UpdateDateText(int iLast, int nNum = NUM_LINE_DISPLAY);
 	CString m_strSearch;
 	CString m_strDate0;

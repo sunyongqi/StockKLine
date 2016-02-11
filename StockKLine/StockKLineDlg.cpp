@@ -1,5 +1,5 @@
-
-// StockKLineDlg.cpp : À‘•ƒtƒ@ƒCƒ‹
+ï»¿
+// StockKLineDlg.cpp : å®Ÿè£…ãƒ•ã‚¡ã‚¤ãƒ«
 //
 
 #include "stdafx.h"
@@ -7,30 +7,38 @@
 #include "StockKLineDlg.h"
 #include "afxdialogex.h"
 #include "StockPrice.h"
+#include <map>
+#include <fstream>
+#include <sstream>
+#include <cstdlib>
+#include <locale>
+#include <codecvt>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
+//#ifdef _DEBUG
+//#define new DEBUG_NEW
+//#endif
 
 #define NUM_DAYS_MAX		8000
 struct daySummary history[NUM_DAYS_MAX];
+std::map<std::wstring, std::wstring> g_mapCodeName;
+std::map<std::wstring, std::wstring> g_mapNameCode;
 
-// ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚Ìƒo[ƒWƒ‡ƒ“î•ñ‚Ég‚í‚ê‚é CAboutDlg ƒ_ƒCƒAƒƒO
+// ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒãƒ¼ã‚¸ãƒ§ãƒ³æƒ…å ±ã«ä½¿ã‚ã‚Œã‚‹ CAboutDlg ãƒ€ã‚¤ã‚¢ãƒ­ã‚°
 
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
 
-// ƒ_ƒCƒAƒƒO ƒf[ƒ^
+// ãƒ€ã‚¤ã‚¢ãƒ­ã‚° ãƒ‡ãƒ¼ã‚¿
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
 
 	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV ƒTƒ|[ƒg
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV ã‚µãƒãƒ¼ãƒˆ
 
-// À‘•
+// å®Ÿè£…
 protected:
 	DECLARE_MESSAGE_MAP()
 };
@@ -48,13 +56,13 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CStockKLineDlg ƒ_ƒCƒAƒƒO
+// CStockKLineDlg ãƒ€ã‚¤ã‚¢ãƒ­ã‚°
 
 
 
 CStockKLineDlg::CStockKLineDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_STOCKKLINE_DIALOG, pParent)
-	, m_strStockCode(_T(""))
+	, m_strStockInput(_T(""))
 	, m_strDate0(_T(""))
 	, m_strDate1(_T(""))
 	, m_strDate2(_T(""))
@@ -64,6 +72,8 @@ CStockKLineDlg::CStockKLineDlg(CWnd* pParent /*=NULL*/)
 	, m_strDate6(_T(""))
 	, m_strDate7(_T(""))
 	, m_strDate8(_T(""))
+	, m_strStockName(_T(""))
+	, m_strStockCode(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -71,9 +81,9 @@ CStockKLineDlg::CStockKLineDlg(CWnd* pParent /*=NULL*/)
 void CStockKLineDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_GRAPH, m_KLine);
-	DDX_Text(pDX, IDC_EDIT1, m_strStockCode);
-	DDV_MaxChars(pDX, m_strStockCode, 9);
+	DDX_Control(pDX, IDC_GRAPH, m_StockGraph);
+	DDX_Text(pDX, IDC_EDIT1, m_strStockInput);
+	DDV_MaxChars(pDX, m_strStockInput, 6);
 	DDX_Text(pDX, IDC_STATIC_DATE0, m_strDate0);
 	DDX_Text(pDX, IDC_STATIC_DATE1, m_strDate1);
 	DDX_Text(pDX, IDC_STATIC_DATE2, m_strDate2);
@@ -83,6 +93,8 @@ void CStockKLineDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_DATE6, m_strDate6);
 	DDX_Text(pDX, IDC_STATIC_DATE7, m_strDate7);
 	DDX_Text(pDX, IDC_STATIC_DATE8, m_strDate8);
+	DDX_Text(pDX, IDC_STOCKNAME, m_strStockName);
+	DDX_Text(pDX, IDC_STOCKCODE, m_strStockCode);
 }
 
 BEGIN_MESSAGE_MAP(CStockKLineDlg, CDialogEx)
@@ -93,18 +105,19 @@ BEGIN_MESSAGE_MAP(CStockKLineDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_GETPRICE, &CStockKLineDlg::OnBnClickedGetprice)
 	ON_EN_CHANGE(IDC_EDIT1, &CStockKLineDlg::OnEnChangeEdit1)
 	ON_BN_CLICKED(IDC_FINDPATTERN, &CStockKLineDlg::OnBnClickedFindpattern)
+	ON_BN_CLICKED(IDC_DOWNLOADALL, &CStockKLineDlg::OnBnClickedDownloadall)
 END_MESSAGE_MAP()
 
 
-// CStockKLineDlg ƒƒbƒZ[ƒW ƒnƒ“ƒhƒ‰[
+// CStockKLineDlg ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ ãƒãƒ³ãƒ‰ãƒ©ãƒ¼
 
 BOOL CStockKLineDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// "ƒo[ƒWƒ‡ƒ“î•ñ..." ƒƒjƒ…[‚ğƒVƒXƒeƒ€ ƒƒjƒ…[‚É’Ç‰Á‚µ‚Ü‚·B
+	// "ãƒãƒ¼ã‚¸ãƒ§ãƒ³æƒ…å ±..." ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’ã‚·ã‚¹ãƒ†ãƒ  ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã«è¿½åŠ ã—ã¾ã™ã€‚
 
-	// IDM_ABOUTBOX ‚ÍAƒVƒXƒeƒ€ ƒRƒ}ƒ“ƒh‚Ì”ÍˆÍ“à‚É‚È‚¯‚ê‚Î‚È‚è‚Ü‚¹‚ñB
+	// IDM_ABOUTBOX ã¯ã€ã‚·ã‚¹ãƒ†ãƒ  ã‚³ãƒãƒ³ãƒ‰ã®ç¯„å›²å†…ã«ãªã‘ã‚Œã°ãªã‚Šã¾ã›ã‚“ã€‚
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
@@ -122,16 +135,64 @@ BOOL CStockKLineDlg::OnInitDialog()
 		}
 	}
 
-	// ‚±‚Ìƒ_ƒCƒAƒƒO‚ÌƒAƒCƒRƒ“‚ğİ’è‚µ‚Ü‚·BƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌƒƒCƒ“ ƒEƒBƒ“ƒhƒE‚ªƒ_ƒCƒAƒƒO‚Å‚È‚¢ê‡A
-	//  Framework ‚ÍA‚±‚Ìİ’è‚ğ©“®“I‚És‚¢‚Ü‚·B
-	SetIcon(m_hIcon, TRUE);			// ‘å‚«‚¢ƒAƒCƒRƒ“‚Ìİ’è
-	SetIcon(m_hIcon, FALSE);		// ¬‚³‚¢ƒAƒCƒRƒ“‚Ìİ’è
+	// ã“ã®ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¤ã‚³ãƒ³ã‚’è¨­å®šã—ã¾ã™ã€‚ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒ¡ã‚¤ãƒ³ ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã§ãªã„å ´åˆã€
+	//  Framework ã¯ã€ã“ã®è¨­å®šã‚’è‡ªå‹•çš„ã«è¡Œã„ã¾ã™ã€‚
+	SetIcon(m_hIcon, TRUE);			// å¤§ãã„ã‚¢ã‚¤ã‚³ãƒ³ã®è¨­å®š
+	SetIcon(m_hIcon, FALSE);		// å°ã•ã„ã‚¢ã‚¤ã‚³ãƒ³ã®è¨­å®š
 
-	// TODO: ‰Šú‰»‚ğ‚±‚±‚É’Ç‰Á‚µ‚Ü‚·B
-	m_strStockCode = _T("000877.sz");
+	// TODO: åˆæœŸåŒ–ã‚’ã“ã“ã«è¿½åŠ ã—ã¾ã™ã€‚
+	//m_strStockInput = _T("000877.sz");
+	m_strStockInput = _T("ä¸Šè¯æŒ‡æ•°");
 	UpdateData(FALSE);
 
-	return TRUE;  // ƒtƒH[ƒJƒX‚ğƒRƒ“ƒgƒ[ƒ‹‚Éİ’è‚µ‚½ê‡‚ğœ‚«ATRUE ‚ğ•Ô‚µ‚Ü‚·B
+	g_mapCodeName.clear();
+	g_mapNameCode.clear();
+
+	std::string strFileName = PRICEFILE_PATH;
+	strFileName += "stocklist.csv";
+	std::wifstream filestream(strFileName);
+	if (!filestream.is_open())
+	{
+		// ãƒ•ã‚¡ã‚¤ãƒ«ãŒé–‹ã‘ãªã‹ã£ãŸå ´åˆã¯çµ‚äº†ã™ã‚‹
+		return false;
+	}
+
+	const std::locale empty_locale = std::locale::empty();
+	typedef std::codecvt_utf8<wchar_t> converter_type;
+	const converter_type* converter = new converter_type;
+	const std::locale utf8_locale = std::locale(empty_locale, converter);
+	filestream.imbue(utf8_locale);
+	std::wstring strCode, strName;
+
+	std::wstring str;
+	while (std::getline(filestream, str)) {
+		std::wistringstream stream(str);
+
+		//1è¡Œã®ã†ã¡ã€æ–‡å­—åˆ—ã¨ã‚³ãƒ³ãƒã‚’åˆ†å‰²ã™ã‚‹
+		while (std::getline(stream, strCode, L','))
+		{
+			if (std::getline(stream, strName, L','))
+			{
+				strCode = std::wstring(strCode, 1, strCode.length() - 2);
+				strName = std::wstring(strName, 1, strName.length() - 2);
+				if (strCode.front() == L'\"')
+					strCode.erase(0, 1);	// ãªãœã‹1è¡Œç›®ã ã‘2æ–‡å­—å‰Šé™¤ã—ãªã„ã¨ã„ã‘ãªã„
+
+				if (strCode.front() == '6')
+					strCode += L".ss";
+				else
+					strCode += L".sz";
+
+				g_mapCodeName.insert(std::make_pair(strCode, strName));
+				g_mapNameCode.insert(std::make_pair(strName, strCode));
+				//int temp = stof(token); //stof(string str) : stringã‚’floatã«å¤‰æ›
+			}
+			else
+				break;
+		}
+	}
+
+	return TRUE;  // ãƒ•ã‚©ãƒ¼ã‚«ã‚¹ã‚’ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã«è¨­å®šã—ãŸå ´åˆã‚’é™¤ãã€TRUE ã‚’è¿”ã—ã¾ã™ã€‚
 }
 
 void CStockKLineDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -147,19 +208,19 @@ void CStockKLineDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
-// ƒ_ƒCƒAƒƒO‚ÉÅ¬‰»ƒ{ƒ^ƒ“‚ğ’Ç‰Á‚·‚éê‡AƒAƒCƒRƒ“‚ğ•`‰æ‚·‚é‚½‚ß‚Ì
-//  ‰º‚ÌƒR[ƒh‚ª•K—v‚Å‚·BƒhƒLƒ…ƒƒ“ƒg/ƒrƒ…[ ƒ‚ƒfƒ‹‚ğg‚¤ MFC ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚Ìê‡A
-//  ‚±‚ê‚ÍAFramework ‚É‚æ‚Á‚Ä©“®“I‚Éİ’è‚³‚ê‚Ü‚·B
+// ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã«æœ€å°åŒ–ãƒœã‚¿ãƒ³ã‚’è¿½åŠ ã™ã‚‹å ´åˆã€ã‚¢ã‚¤ã‚³ãƒ³ã‚’æç”»ã™ã‚‹ãŸã‚ã®
+//  ä¸‹ã®ã‚³ãƒ¼ãƒ‰ãŒå¿…è¦ã§ã™ã€‚ãƒ‰ã‚­ãƒ¥ãƒ¡ãƒ³ãƒˆ/ãƒ“ãƒ¥ãƒ¼ ãƒ¢ãƒ‡ãƒ«ã‚’ä½¿ã† MFC ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®å ´åˆã€
+//  ã“ã‚Œã¯ã€Framework ã«ã‚ˆã£ã¦è‡ªå‹•çš„ã«è¨­å®šã•ã‚Œã¾ã™ã€‚
 
 void CStockKLineDlg::OnPaint()
 {
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // •`‰æ‚ÌƒfƒoƒCƒX ƒRƒ“ƒeƒLƒXƒg
+		CPaintDC dc(this); // æç”»ã®ãƒ‡ãƒã‚¤ã‚¹ ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆ
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		// ƒNƒ‰ƒCƒAƒ“ƒg‚ÌlŠpŒ`—Ìˆæ“à‚Ì’†‰›
+		// ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã®å››è§’å½¢é ˜åŸŸå†…ã®ä¸­å¤®
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
@@ -167,7 +228,7 @@ void CStockKLineDlg::OnPaint()
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
-		// ƒAƒCƒRƒ“‚Ì•`‰æ
+		// ã‚¢ã‚¤ã‚³ãƒ³ã®æç”»
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
@@ -176,8 +237,8 @@ void CStockKLineDlg::OnPaint()
 	}
 }
 
-// ƒ†[ƒU[‚ªÅ¬‰»‚µ‚½ƒEƒBƒ“ƒhƒE‚ğƒhƒ‰ƒbƒO‚µ‚Ä‚¢‚é‚Æ‚«‚É•\¦‚·‚éƒJ[ƒ\ƒ‹‚ğæ“¾‚·‚é‚½‚ß‚ÉA
-//  ƒVƒXƒeƒ€‚ª‚±‚ÌŠÖ”‚ğŒÄ‚Ño‚µ‚Ü‚·B
+// ãƒ¦ãƒ¼ã‚¶ãƒ¼ãŒæœ€å°åŒ–ã—ãŸã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ãƒ‰ãƒ©ãƒƒã‚°ã—ã¦ã„ã‚‹ã¨ãã«è¡¨ç¤ºã™ã‚‹ã‚«ãƒ¼ã‚½ãƒ«ã‚’å–å¾—ã™ã‚‹ãŸã‚ã«ã€
+//  ã‚·ã‚¹ãƒ†ãƒ ãŒã“ã®é–¢æ•°ã‚’å‘¼ã³å‡ºã—ã¾ã™ã€‚
 HCURSOR CStockKLineDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
@@ -189,15 +250,62 @@ void CStockKLineDlg::OnBnClickedGetprice()
 {
 	UpdateData(TRUE);
 
+	std::string strCode;
 	CStockPrice stockPrice;
-	CStringA strA(m_strStockCode);
-	std::string strCode((LPCSTR)strA);
-	stockPrice.DownloadSingleStockPrices(strCode);
+	// ç‰¹æ®Šãƒ‘ã‚¿ãƒ¼ãƒ³
+	if (m_strStockInput.Left(2) == L"ä¸Šè¯")
+	{
+		strCode = "000001.ss";
+	}
+	else if (m_strStockInput.Left(2) == L"æ·±è¯")
+	{
+		strCode = "399001.sz";
+	}
+	// é€šå¸¸ã®æ ª
+	else
+	{
+		std::wstring wsInput = m_strStockInput;
+		std::wstring wsCode = L"";
+		CString strFirst = m_strStockInput.Left(1);
+		if (strFirst >= L"0" && strFirst <= L"9")
+		{
+			auto it = g_mapCodeName.find(wsInput);
+			if (it != g_mapCodeName.end())
+			{
+				wsCode = it->first;
+				m_strStockCode = wsCode.c_str();
+				m_strStockName = it->second.c_str();
+			}
+			else
+			{
+				wsCode = wsInput;
+			}
+		}
+		else
+		{
+			auto it = g_mapNameCode.find(wsInput);
+			if (it != g_mapNameCode.end())
+			{
+				wsCode = it->second;
+				m_strStockCode = wsCode.c_str();
+				m_strStockName = it->first.c_str();
+			}
+			else
+			{
+				return;
+			}
+		}
+		
+		CStringA strA(wsCode.c_str());
+		strCode = (LPCSTR)strA;
+	}
+	UpdateData(FALSE);
+	//stockPrice.DownloadSingleStockPrices(strCode);
 
-	DrawKLine(strCode);
+	DrawStockGraph(strCode);
 }
 
-BOOL CStockKLineDlg::DrawKLine(std::string strCode)
+BOOL CStockKLineDlg::DrawStockGraph(std::string strCode)
 {
 	std::string strFileName = PRICEFILE_PATH;
 	strFileName += strCode;
@@ -230,9 +338,9 @@ BOOL CStockKLineDlg::DrawKLine(std::string strCode)
 	UpdateDateText(0, NUM_LINE_DISPLAY);
 	
 
-	m_KLine.SetDateRange(0, NUM_LINE_DISPLAY);
-	m_KLine.AnalyzeData(history, i);
-	m_KLine.RedrawWindow();
+	m_StockGraph.SetDateRange(0, NUM_LINE_DISPLAY);
+	m_StockGraph.AnalyzeData(history, i);
+	m_StockGraph.RedrawWindow();
 	return TRUE;
 }
 
@@ -252,12 +360,12 @@ void CStockKLineDlg::UpdateDateText(int iLast, int nNum)
 
 void CStockKLineDlg::OnEnChangeEdit1()
 {
-	// TODO: ‚±‚ê‚ª RICHEDIT ƒRƒ“ƒgƒ[ƒ‹‚Ìê‡A‚±‚ÌƒRƒ“ƒgƒ[ƒ‹‚ª
-	// ‚±‚Ì’Ê’m‚ğ‘—M‚·‚é‚É‚ÍACDialogEx::OnInitDialog() ŠÖ”‚ğƒI[ƒo[ƒ‰ƒCƒh‚µA
-	// CRichEditCtrl().SetEventMask() ‚ğ
-	// OR ó‘Ô‚Ì ENM_CHANGE ƒtƒ‰ƒO‚ğƒ}ƒXƒN‚É“ü‚ê‚ÄŒÄ‚Ño‚·•K—v‚ª‚ ‚è‚Ü‚·B
+	// TODO: ã“ã‚ŒãŒ RICHEDIT ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®å ´åˆã€ã“ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ãŒ
+	// ã“ã®é€šçŸ¥ã‚’é€ä¿¡ã™ã‚‹ã«ã¯ã€CDialogEx::OnInitDialog() é–¢æ•°ã‚’ã‚ªãƒ¼ãƒãƒ¼ãƒ©ã‚¤ãƒ‰ã—ã€
+	// CRichEditCtrl().SetEventMask() ã‚’
+	// OR çŠ¶æ…‹ã® ENM_CHANGE ãƒ•ãƒ©ã‚°ã‚’ãƒã‚¹ã‚¯ã«å…¥ã‚Œã¦å‘¼ã³å‡ºã™å¿…è¦ãŒã‚ã‚Šã¾ã™ã€‚
 
-	// TODO: ‚±‚±‚ÉƒRƒ“ƒgƒ[ƒ‹’Ê’mƒnƒ“ƒhƒ‰[ ƒR[ƒh‚ğ’Ç‰Á‚µ‚Ä‚­‚¾‚³‚¢B
+	// TODO: ã“ã“ã«ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«é€šçŸ¥ãƒãƒ³ãƒ‰ãƒ©ãƒ¼ ã‚³ãƒ¼ãƒ‰ã‚’è¿½åŠ ã—ã¦ãã ã•ã„ã€‚
 }
 
 void CStockKLineDlg::UpdateScrollBar(int nPos, int nMax, int nPage)
@@ -268,7 +376,7 @@ void CStockKLineDlg::UpdateScrollBar(int nPos, int nMax, int nPage)
 	info.nMin = 0;
 	info.nPos = nPos;
 
-	// …•½ƒo[
+	// æ°´å¹³ãƒãƒ¼
 	info.nPage = nPage;
 	info.nMax = nMax;
 	if (!SetScrollInfo(SB_HORZ, &info, TRUE))
@@ -304,67 +412,74 @@ void CStockKLineDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	default:
 		return;
 	}
-	nNew = min(nMax - (int)info.nPage, max(info.nMin, nNew));
+	nNew = min(nMax - info.nPage, max(info.nMin, nNew));
 
 	int nPosOrg = info.nPos;
 	if (nNew != nPosOrg) {
 		SetScrollPos(SB_HORZ, nNew, TRUE);	// ScrollBar Position
 		int iLastData = info.nMax - nNew - info.nPage;
-		m_KLine.SetDateRange(iLastData, NUM_LINE_DISPLAY);	// ˆê”Ô‰E‚ÌˆÊ’u‚ğ0‚Æ‚·‚é
-		m_KLine.RedrawWindow();
+		m_StockGraph.SetDateRange(iLastData, NUM_LINE_DISPLAY);	// ä¸€ç•ªå³ã®ä½ç½®ã‚’0ã¨ã™ã‚‹
+		m_StockGraph.RedrawWindow();
 		UpdateDateText(iLastData, NUM_LINE_DISPLAY);
 	}
 }
 
 void CStockKLineDlg::OnBnClickedFindpattern()
 {
-	SUMMARY data[4];
-	data[0].open = 90;
-	data[0].high = 96;
-	data[0].low = 90;
-	data[0].close = 96;
-	
-	data[1].open = 89;
-	data[1].high = 91;
-	data[1].low = 86;
-	data[1].close = 89;
+	//SUMMARY data[4];
+	//data[0].open = 90;
+	//data[0].high = 96;
+	//data[0].low = 90;
+	//data[0].close = 96;
+	//
+	//data[1].open = 89;
+	//data[1].high = 91;
+	//data[1].low = 86;
+	//data[1].close = 89;
 
-	data[2].open = 100;
-	data[2].high = 100;
-	data[2].low = 92;
-	data[2].close = 92;
+	//data[2].open = 100;
+	//data[2].high = 100;
+	//data[2].low = 92;
+	//data[2].close = 92;
 
-	data[3].close = 100;
+	//data[3].close = 100;
 
-	//data[0].open = 9.2;
-	//data[0].low = 9.1;
-	//data[0].close = data[0].high = 9.7;
-	//data[1].open = 8.9;
-	//data[1].high = 9.2;
-	//data[1].low = 8.5;
-	//data[1].close = 9.0;
-	//data[2].open = data[2].high = 9.9;
-	//data[2].low = data[2].close = 9.3;
-	//data[3].close = 10.0;
+	////data[0].open = 9.2;
+	////data[0].low = 9.1;
+	////data[0].close = data[0].high = 9.7;
+	////data[1].open = 8.9;
+	////data[1].high = 9.2;
+	////data[1].low = 8.5;
+	////data[1].close = 9.0;
+	////data[2].open = data[2].high = 9.9;
+	////data[2].low = data[2].close = 9.3;
+	////data[3].close = 10.0;
 
-	int nCount = m_KLine.FindCount(data, 3);
-	//int nCount = m_KLine.FindCount(history + 15, 3);
-	if (nCount <= 0)
-	{
-		AfxMessageBox(_T("Cannot find any similar pattern!"));
-		return;
-	}
+	//int nCount = m_StockGraph.FindCount(data, 3);
+	////int nCount = m_StockGraph.FindCount(history + 15, 3);
+	//if (nCount <= 0)
+	//{
+	//	AfxMessageBox(_T("Cannot find any similar pattern!"));
+	//	return;
+	//}
 
-	int nIndex = m_KLine.FindNext(data, 3);
-	//int nIndex = m_KLine.FindNext(history + 15, 3);
-	if (nIndex != -1)
-	{
-		//m_KLine.SetDateRange(nIndex, NUM_LINE_DISPLAY);	// ˆê”Ô‰E‚ÌˆÊ’u‚ğ0‚Æ‚·‚é
-		m_KLine.SetDateRange(max(nIndex - (int)(NUM_LINE_DISPLAY / 2.0), 0), NUM_LINE_DISPLAY);	// Œ©‚Â‚©‚Á‚½ƒpƒ^[ƒ“‚ğ^‚ñ’†‚É’u‚­
-		m_KLine.SetMark(nIndex, 3);
-		m_KLine.RedrawWindow();
-		UpdateDateText(nIndex, NUM_LINE_DISPLAY);
-	}
-	else
-		AfxMessageBox(_T("Cannot find more similar pattern!"));
+	//int nIndex = m_StockGraph.FindNext(data, 3);
+	////int nIndex = m_StockGraph.FindNext(history + 15, 3);
+	//if (nIndex != -1)
+	//{
+	//	m_StockGraph.SetDateRange(nIndex, NUM_LINE_DISPLAY);	// ä¸€ç•ªå³ã®ä½ç½®ã‚’0ã¨ã™ã‚‹
+	//	//m_StockGraph.SetDateRange(max(nIndex - (int)(NUM_LINE_DISPLAY / 2.0), 0), NUM_LINE_DISPLAY);	// è¦‹ã¤ã‹ã£ãŸãƒ‘ã‚¿ãƒ¼ãƒ³ã‚’çœŸã‚“ä¸­ã«ç½®ã
+	//	m_StockGraph.SetMark(nIndex, 3);
+	//	m_StockGraph.RedrawWindow();
+	//	UpdateDateText(nIndex, NUM_LINE_DISPLAY);
+	//}
+	//else
+	//	AfxMessageBox(_T("Cannot find more similar pattern!"));
+}
+
+
+void CStockKLineDlg::OnBnClickedDownloadall()
+{
+	CStockPrice stockPrice;
+	stockPrice.DownloadAllStocksPrices();
 }

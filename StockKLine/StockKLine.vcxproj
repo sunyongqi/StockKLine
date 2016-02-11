@@ -201,7 +201,7 @@
     <ClInclude Include="3rdparty\curl\include\curl\multi.h" />
     <ClInclude Include="3rdparty\curl\include\curl\stdcheaders.h" />
     <ClInclude Include="3rdparty\curl\include\curl\typecheck-gcc.h" />
-    <ClInclude Include="KLine.h" />
+    <ClInclude Include="StockGraph.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StockKLine.h" />
@@ -210,7 +210,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="KLine.cpp" />
+    <ClCompile Include="StockGraph.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

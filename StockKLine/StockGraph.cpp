@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "KLine.h"
+#include "StockGraph.h"
 #include <iostream>
 //#include <string>
 #include <sstream>
@@ -15,7 +15,7 @@ static char THIS_FILE[] = __FILE__;
 	 Arg: ---
   Return: ---
 ****************************************************************************/
-CKLine::CKLine()
+CStockGraph::CStockGraph()
 {
 	m_nNumDayDisplay = 0;
 	m_nLastIndex = 0;
@@ -47,7 +47,7 @@ CKLine::CKLine()
 	 Arg: ---
   Return: ---
 ****************************************************************************/
-CKLine::~CKLine()
+CStockGraph::~CStockGraph()
 {
 	m_penYAxis.DeleteObject();
 	m_penRed.DeleteObject();
@@ -68,7 +68,7 @@ CKLine::~CKLine()
 		  グラフの色
   Return: ---
 ****************************************************************************/
-void CKLine::SetColor(COLORREF rgbBack, COLORREF rgbYAxis, COLORREF rgbGraph)
+void CStockGraph::SetColor(COLORREF rgbBack, COLORREF rgbYAxis, COLORREF rgbGraph)
 {
 	m_penYAxis.DeleteObject();
 	m_penRed.DeleteObject();
@@ -99,13 +99,13 @@ void CKLine::SetColor(COLORREF rgbBack, COLORREF rgbYAxis, COLORREF rgbGraph)
 	 Arg: プロット数
   Return: ---
 ****************************************************************************/
-void CKLine::SetDateRange(int iLast, int nNum)
+void CStockGraph::SetDateRange(int iLast, int nNum)
 {
 	m_nNumDayDisplay = nNum;
 	m_nLastIndex = iLast;
 }
 
-void CKLine::AnalyzeData(SUMMARY* pHistory, int nCount)
+void CStockGraph::AnalyzeData(SUMMARY* pHistory, int nCount)
 {
 	m_pHistory = pHistory;
 	m_nDaysTotal = nCount;
@@ -115,7 +115,7 @@ void CKLine::AnalyzeData(SUMMARY* pHistory, int nCount)
 	//MakeKPatternMap();
 }
 
-void CKLine::CalculateMovingAverages()
+void CStockGraph::CalculateMovingAverages()
 {
 	if (!m_pHistory)
 		return;
@@ -138,7 +138,7 @@ void CKLine::CalculateMovingAverages()
 		}
 	}
 }
-//void CKLine::CalculateMovingAverages()
+//void CStockGraph::CalculateMovingAverages()
 //{
 //	if (!m_pHistory)
 //		return;
@@ -195,7 +195,7 @@ void CKLine::CalculateMovingAverages()
 //	}
 //}
 
-void CKLine::CalculateKLinePattern()
+void CStockGraph::CalculateKLinePattern()
 {
 	if (!m_pHistory)
 		return;
@@ -218,7 +218,7 @@ void CKLine::CalculateKLinePattern()
 	}
 }
 
-void CKLine::MakeKPatternMap()
+void CStockGraph::MakeKPatternMap()
 {
 	m_mapKPatternTrend.clear();
 	m_nFindFrom = 0;
@@ -246,7 +246,7 @@ void CKLine::MakeKPatternMap()
 }
 
 #define BOUNDARY_RATE 0.03  // 3%。EncodeRateToTwoBit用。
-BYTE CKLine::EncodeRateToTwoBit(double fChangeRate)
+BYTE CStockGraph::EncodeRateToTwoBit(double fChangeRate)
 {
 	BYTE byRet;
 	if (fChangeRate >= 0)
@@ -257,7 +257,7 @@ BYTE CKLine::EncodeRateToTwoBit(double fChangeRate)
 	return byRet;
 }
 
-BYTE CKLine::EncodeOneDayToBYTE(SUMMARY* pData)
+BYTE CStockGraph::EncodeOneDayToBYTE(SUMMARY* pData)
 {
 	//double fValueBefore = (pData + 1)->close;
 	//double fRateOpen = (pData->open - fValueBefore) / fValueBefore;
@@ -281,7 +281,7 @@ BYTE CKLine::EncodeOneDayToBYTE(SUMMARY* pData)
 	return byRet;
 }
 
-KPATTERN CKLine::EncodeKPattern(SUMMARY* pData, int nPeriod)
+KPATTERN CStockGraph::EncodeKPattern(SUMMARY* pData, int nPeriod)
 {
 	ASSERT(nPeriod > 0);
 	ASSERT(nPeriod <= 4);
@@ -294,7 +294,7 @@ KPATTERN CKLine::EncodeKPattern(SUMMARY* pData, int nPeriod)
 	return dwRet;
 }
 
-ePriceChange CKLine::GetClosePriceTrend(SUMMARY* pData, int nPeriod)
+ePriceChange CStockGraph::GetClosePriceTrend(SUMMARY* pData, int nPeriod)
 {
 	ASSERT(nPeriod > 1);
 	if (pData->close > (pData + nPeriod)->close)	// Rise
@@ -321,7 +321,7 @@ ePriceChange CKLine::GetClosePriceTrend(SUMMARY* pData, int nPeriod)
 	}
 }
 
-ePriceChange CKLine::GetVolumeTrend(SUMMARY* pData, int nPeriod)
+ePriceChange CStockGraph::GetVolumeTrend(SUMMARY* pData, int nPeriod)
 {
 	ASSERT(nPeriod > 1);
 	if (pData->volume > (pData + nPeriod)->volume)	// Rise
@@ -348,7 +348,7 @@ ePriceChange CKLine::GetVolumeTrend(SUMMARY* pData, int nPeriod)
 	}
 }
 
-ePriceChange CKLine::GetMA5Trend(SUMMARY* pData, int nPeriod)
+ePriceChange CStockGraph::GetMA5Trend(SUMMARY* pData, int nPeriod)
 {
 	ASSERT(nPeriod > 1);
 	if (pData->priceMA[0] > (pData + nPeriod)->priceMA[0])	// Rise
@@ -375,7 +375,7 @@ ePriceChange CKLine::GetMA5Trend(SUMMARY* pData, int nPeriod)
 	}
 }
 
-int CKLine::FindCount(SUMMARY* pDate, int nPeriod)
+int CStockGraph::FindCount(SUMMARY* pDate, int nPeriod)
 {
 	ASSERT(nPeriod <= 4);
 	KPATTERN kPattern = EncodeKPattern(pDate, nPeriod);
@@ -383,7 +383,7 @@ int CKLine::FindCount(SUMMARY* pDate, int nPeriod)
 	return m_mapKPatternTrend.count(kPattern);
 }
 
-int CKLine::FindNext(SUMMARY* pDate, int nPeriod)
+int CStockGraph::FindNext(SUMMARY* pDate, int nPeriod)
 {
 	ASSERT(nPeriod <= 4);
 	ASSERT(nPeriod == 3);	// 現状mapはkPattern3しか対応していないため
@@ -437,7 +437,7 @@ int CKLine::FindNext(SUMMARY* pDate, int nPeriod)
 	return -1;
 }
 
-void CKLine::SetMark(int iStart, int nCount)
+void CStockGraph::SetMark(int iStart, int nCount)
 {
 	m_nMarkStart = iStart;
 	m_nMarkCount = nCount;
@@ -449,7 +449,7 @@ void CKLine::SetMark(int iStart, int nCount)
 		  グラフの高さ
   Return: ---
 ****************************************************************************/
-void CKLine::Draw(CDC* pDC)
+void CStockGraph::Draw(CDC* pDC)
 {
 	DrawBackground(pDC);
 	DrawKLine(pDC);
@@ -463,7 +463,7 @@ void CKLine::Draw(CDC* pDC)
 		DrawMark(pDC);
 }
 
-void CKLine::DrawBackground(CDC* pDC)
+void CStockGraph::DrawBackground(CDC* pDC)
 {
 	//-----------------------------------------------------------------------
 	// 背景
@@ -575,7 +575,7 @@ void CKLine::DrawBackground(CDC* pDC)
 	pDC->SelectObject(pOldPen);
 }
 
-void CKLine::DrawKLine(CDC* pDC)
+void CStockGraph::DrawKLine(CDC* pDC)
 {
 	ASSERT(m_nNumDayDisplay > 1);
 	if (!m_pHistory)
@@ -636,7 +636,7 @@ void CKLine::DrawKLine(CDC* pDC)
 	pDC->SelectObject(pOldPen);
 }
 
-void CKLine::DrawMovingAverages(CDC* pDC, int iLine)
+void CStockGraph::DrawMovingAverages(CDC* pDC, int iLine)
 {
 	ASSERT(m_nNumDayDisplay > 1);
 	if (!m_pHistory)
@@ -663,7 +663,7 @@ void CKLine::DrawMovingAverages(CDC* pDC, int iLine)
 	pDC->SelectObject(pOldPen);
 }
 
-void CKLine::DrawMark(CDC* pDC)
+void CStockGraph::DrawMark(CDC* pDC)
 {
 	if (m_nMarkCount < 1)
 		return;
@@ -686,7 +686,7 @@ void CKLine::DrawMark(CDC* pDC)
 	pDC->SelectObject(pOldBrush);
 }
 
-void CKLine::DrawVolume(CDC* pDC)
+void CStockGraph::DrawVolume(CDC* pDC)
 {
 	ASSERT(m_nNumDayDisplay > 1);
 	if (!m_pHistory)
@@ -734,19 +734,19 @@ void CKLine::DrawVolume(CDC* pDC)
 	pDC->SelectObject(pOldPen);
 }
 
-int CKLine::PriceToYPos(double fPrice)
+int CStockGraph::PriceToYPos(double fPrice)
 {
 	ASSERT(m_fHighPrice - m_fLowPrice != 0);
 	return (int)(m_nYSpace + (double)m_nHeightPrice * (1.0 - (fPrice - m_fLowPrice) / (m_fHighPrice - m_fLowPrice)));
 }
 
-int CKLine::VolumeToYPos(long nVolume)
+int CStockGraph::VolumeToYPos(long nVolume)
 {
 	ASSERT(m_nHighVolume - m_nLowVolume != 0);
 	return (int)(m_nYSpace * 2 + m_nHeightPrice + (double)m_nHeightVolume * (1.0 - (double)(nVolume - m_nLowVolume) / (double)(m_nHighVolume - m_nLowVolume)));
 }
 
-int CKLine::IndexToXPos(int nIndex)
+int CStockGraph::IndexToXPos(int nIndex)
 {
 	return m_nWidth - (int)(m_fPlotSpace * (double)nIndex + m_fMargin);
 }
@@ -757,8 +757,8 @@ int CKLine::IndexToXPos(int nIndex)
 	Message Handlers
 
 ****************************************************************************/
-BEGIN_MESSAGE_MAP(CKLine, CStatic)
-	//{{AFX_MSG_MAP(CKLine)
+BEGIN_MESSAGE_MAP(CStockGraph, CStatic)
+	//{{AFX_MSG_MAP(CStockGraph)
 	ON_WM_PAINT()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -768,7 +768,7 @@ END_MESSAGE_MAP()
 	 Arg: ---
   Return: ---
 ****************************************************************************/
-void CKLine::OnPaint() 
+void CStockGraph::OnPaint() 
 {
 	CPaintDC dc(this); // 描画用のデバイス コンテキスト
 
