@@ -11,6 +11,12 @@
 #  include <unistd.h>
 #endif
 
+#include <map>
+#include <string>
+//#include <locale> 
+#include <codecvt>
+
+extern std::map<std::wstring, std::wstring> g_mapCodeName;
 
 CStockPrice::CStockPrice()
 {
@@ -30,7 +36,7 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 	return written;
 }
 
-int CStockPrice::DownloadSingleStockPrices(std::string strCode)
+bool CStockPrice::DownloadSingleStockPrices(std::string strCode)
 {
 	CURL *curl;
 	FILE *fp;
@@ -51,7 +57,29 @@ int CStockPrice::DownloadSingleStockPrices(std::string strCode)
 			/* always cleanup */
 			curl_easy_cleanup(curl);
 		}
+		else
+			return false;
+
 		fclose(fp);
 	}
-	return 0;
+	else
+		return false;
+
+	return true;
+}
+
+int CStockPrice::DownloadAllStocksPrices()
+{
+	std::map<std::wstring, std::wstring>::iterator it = g_mapCodeName.begin();
+	int nCount = 0;
+	while (it != g_mapCodeName.end())
+	{
+		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cv;
+		std::string strCode = cv.to_bytes(it->first);
+		it++;
+		if (!DownloadSingleStockPrices(strCode))
+			continue;
+		nCount++;
+	}
+	return nCount;
 }

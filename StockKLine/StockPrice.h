@@ -11,6 +11,7 @@ public:
 	CStockPrice();
 	~CStockPrice();
 
-	int DownloadSingleStockPrices(std::string strCode);
+	bool DownloadSingleStockPrices(std::string strCode);
+	int DownloadAllStocksPrices();
 };
 

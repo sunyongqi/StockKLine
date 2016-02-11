@@ -58,4 +58,5 @@ public:
 	CString m_strStockInput;
 	CString m_strStockName;
 	CString m_strStockCode;
+	afx_msg void OnBnClickedDownloadall();
 };
